@@ -8,6 +8,11 @@ import { fileURLToPath } from "node:url";
 
 const renderPiCodingAgentShim = `export function getMarkdownTheme() { return {}; }`;
 
+const codePreviewShim = `
+export async function loadCodePreviewSettings() { return {}; }
+export function withCodePreviewShell(tool) { return { ...tool, __codePreviewShellWrapped: true }; }
+`;
+
 const renderPiTuiShim = `
 function wrapText(text, width) {
   if (!width || width <= 0) return [text];
@@ -78,6 +83,10 @@ function asDataModule(source) {
 }
 
 export function resolve(specifier, context, nextResolve) {
+  if (specifier === "pi-code-previews") {
+    return { url: asDataModule(codePreviewShim), shortCircuit: true };
+  }
+
   if (context.parentURL?.endsWith("/render.ts")) {
     if (specifier === "@mariozechner/pi-coding-agent") {
       return { url: asDataModule(renderPiCodingAgentShim), shortCircuit: true };

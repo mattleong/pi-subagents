@@ -33,8 +33,9 @@ describe("subagent extension child mode", () => {
 					return () => undefined;
 				},
 			});
-			registerSubagentExtension(fakePi);
+			await registerSubagentExtension(fakePi);
 			if (!registeredTool) throw new Error("tool not registered");
+			if (registeredTool.__codePreviewShellWrapped !== true) throw new Error("tool was not wrapped with code preview shell");
 			const calls = [];
 			const ctx = {
 				cwd: process.cwd(),
@@ -80,7 +81,7 @@ describe("subagent extension child mode", () => {
 					};
 				},
 			});
-			registerSubagentExtension(fakePi);
+			await registerSubagentExtension(fakePi);
 			if (calls.length > 0) {
 				throw new Error("Unexpected child-mode registrations: " + calls.join(", "));
 			}
