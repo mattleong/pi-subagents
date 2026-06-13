@@ -20,6 +20,7 @@ import { type ExtensionAPI, type ExtensionContext, type ToolDefinition } from "@
 import { Box, Container, Spacer, Text, truncateToWidth, visibleWidth, wrapTextWithAnsi, type Component } from "@earendil-works/pi-tui";
 import { discoverAgents } from "../agents/agents.ts";
 import { cleanupAllArtifactDirs, cleanupOldArtifacts, getArtifactsDir } from "../shared/artifacts.ts";
+import { loadCodePreviewSettingsOnce, withCodePreviewShell } from "../shared/code-preview.ts";
 import { resolveCurrentSessionId } from "../shared/session-identity.ts";
 import { cleanupOldChainDirs } from "../shared/settings.ts";
 import { clearLegacyResultAnimationTimer, renderWidget, renderSubagentResult } from "../tui/render.ts";
@@ -207,11 +208,13 @@ class SubagentControlNoticeComponent implements Component {
 	}
 }
 
-export default function registerSubagentExtension(pi: ExtensionAPI): void {
+export default async function registerSubagentExtension(pi: ExtensionAPI): Promise<void> {
 	if (process.env[SUBAGENT_CHILD_ENV] === "1") {
-		if (process.env[SUBAGENT_FANOUT_CHILD_ENV] === "1") registerFanoutChildSubagentExtension(pi);
+		if (process.env[SUBAGENT_FANOUT_CHILD_ENV] === "1") await registerFanoutChildSubagentExtension(pi);
 		return;
 	}
+	await loadCodePreviewSettingsOnce();
+
 	const globalStore = globalThis as Record<string, unknown>;
 	const runtimeCleanupStoreKey = "__piSubagentRuntimeCleanup";
 	const previousRuntimeCleanup = globalStore[runtimeCleanupStoreKey];
@@ -461,7 +464,7 @@ DIAGNOSTICS:
 
 	};
 
-	pi.registerTool(tool);
+	pi.registerTool(withCodePreviewShell(tool));
 	registerSlashCommands(pi, state);
 
 	const eventUnsubscribeStoreKey = "__piSubagentEventUnsubscribes";

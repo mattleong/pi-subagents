@@ -34,7 +34,7 @@ describe("subagent extension child mode", () => {
 					return () => undefined;
 				},
 			});
-			registerSubagentExtension(fakePi);
+			await registerSubagentExtension(fakePi);
 			if (!registeredTool) throw new Error("tool not registered");
 			const calls = [];
 			const ctx = {
@@ -86,7 +86,7 @@ describe("subagent extension child mode", () => {
 					return () => undefined;
 				},
 			});
-			registerSubagentExtension(fakePi);
+			await registerSubagentExtension(fakePi);
 			if (!registeredTool) throw new Error("tool not registered");
 			const theme = { fg(_name, text) { return text; }, bold(text) { return text; } };
 			const asyncChain = registeredTool.renderCall({ chain: [{ agent: "worker" }, { agent: "reviewer" }], async: true }, theme).text;
@@ -124,7 +124,7 @@ describe("subagent extension child mode", () => {
 					};
 				},
 			});
-			registerSubagentExtension(fakePi);
+			await registerSubagentExtension(fakePi);
 			if (calls.length > 0) {
 				throw new Error("Unexpected child-mode registrations: " + calls.join(", "));
 			}
@@ -165,7 +165,7 @@ describe("subagent extension child mode", () => {
 					};
 				},
 			});
-			registerSubagentExtension(fakePi);
+			await registerSubagentExtension(fakePi);
 			if (!registeredTool || registeredTool.name !== "subagent") throw new Error("child-safe subagent tool not registered");
 			const unexpected = calls.filter((call) => call !== "registerTool");
 			if (unexpected.length > 0) throw new Error("Unexpected parent-surface registrations: " + unexpected.join(", "));
@@ -197,7 +197,7 @@ describe("subagent extension child mode", () => {
 				registerTool(tool) { registeredTool = tool; },
 				getSessionName() { return undefined; },
 			};
-			registerFanoutChildSubagentExtension(fakePi);
+			await registerFanoutChildSubagentExtension(fakePi);
 			if (!registeredTool) throw new Error("tool not registered");
 			const ctx = {
 				cwd: process.cwd(),

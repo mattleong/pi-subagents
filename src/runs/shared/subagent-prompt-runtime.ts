@@ -1,6 +1,7 @@
 import * as fs from "node:fs";
 import * as path from "node:path";
-import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
+import type { ExtensionAPI, ToolDefinition } from "@earendil-works/pi-coding-agent";
+import { loadCodePreviewSettingsOnce, withCodePreviewShell } from "../../shared/code-preview.ts";
 import { SUBAGENT_FANOUT_CHILD_ENV } from "./pi-args.ts";
 import { STRUCTURED_OUTPUT_CAPTURE_ENV, STRUCTURED_OUTPUT_SCHEMA_ENV, validateStructuredOutputValue } from "./structured-output.ts";
 import type { JsonSchemaObject } from "../../shared/types.ts";
@@ -153,10 +154,11 @@ export function stripParentOnlySubagentMessages(messages: unknown[]): unknown[] 
 	return changed ? filtered : messages;
 }
 
-export default function registerSubagentPromptRuntime(pi: ExtensionAPI): void {
+export default async function registerSubagentPromptRuntime(pi: ExtensionAPI): Promise<void> {
 	const structuredOutputPath = process.env[STRUCTURED_OUTPUT_CAPTURE_ENV];
 	const structuredSchemaPath = process.env[STRUCTURED_OUTPUT_SCHEMA_ENV];
 	if (structuredOutputPath && structuredSchemaPath) {
+		await loadCodePreviewSettingsOnce();
 		const schema = JSON.parse(fs.readFileSync(structuredSchemaPath, "utf-8")) as JsonSchemaObject;
 		const parameters = {
 			type: "object",
@@ -164,14 +166,8 @@ export default function registerSubagentPromptRuntime(pi: ExtensionAPI): void {
 			required: ["value"],
 			additionalProperties: false,
 		};
-		const registerTool = pi.registerTool as unknown as (tool: {
-			name: string;
-			label: string;
-			description: string;
-			parameters: unknown;
-			execute: (_id: string, params: { value: unknown }) => Promise<unknown>;
-		}) => void;
-		registerTool({
+		const registerTool = pi.registerTool as unknown as (tool: ToolDefinition<any, any>) => void;
+		const tool: ToolDefinition<any, { path: string }> = {
 			name: "structured_output",
 			label: "Structured Output",
 			description: "Submit the required final structured output for this subagent step. This terminates the step.",
@@ -189,7 +185,8 @@ export default function registerSubagentPromptRuntime(pi: ExtensionAPI): void {
 					terminate: true,
 				};
 			},
-		});
+		};
+		registerTool(withCodePreviewShell(tool));
 	}
 
 	const onRuntimeEvent = pi.on as unknown as (event: string, handler: (event: unknown) => unknown) => void;

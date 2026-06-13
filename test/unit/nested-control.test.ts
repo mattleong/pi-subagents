@@ -385,7 +385,7 @@ describe("nested control routing", () => {
 			logged.push(args);
 		};
 		try {
-			registerFanoutChildSubagentExtension(pi);
+			await registerFanoutChildSubagentExtension(pi);
 			await waitFor(() => logged.some((entry) => String(entry[0] ?? "").includes(route.controlInbox) && String(entry[0] ?? "").includes("root-poll-error")));
 
 			fs.rmSync(route.controlInbox, { force: true });
@@ -429,7 +429,7 @@ describe("nested control routing", () => {
 			logged.push(args);
 		};
 		try {
-			registerFanoutChildSubagentExtension(pi);
+			await registerFanoutChildSubagentExtension(pi);
 			await waitFor(() => logged.some((entry) => String(entry[0] ?? "").includes("result-write-fails") && /keeping request for retry/.test(String(entry[0] ?? ""))));
 			assert.equal(fs.existsSync(requestPath), true);
 
@@ -460,7 +460,7 @@ describe("nested control routing", () => {
 			action: "interrupt",
 		});
 
-		registerFanoutChildSubagentExtension(pi);
+		await registerFanoutChildSubagentExtension(pi);
 		await waitFor(() => readNestedControlResults(route).some((result) => result.requestId === "ownerless-request" && result.ok === false));
 
 		assert.equal(fs.existsSync(requestPath), false);

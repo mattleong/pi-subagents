@@ -68,7 +68,7 @@ describe("subagent prompt runtime", () => {
 			process.env[STRUCTURED_OUTPUT_CAPTURE_ENV] = outputPath;
 			let execute: ((_id: string, params: { value: unknown }) => Promise<{ terminate?: boolean }>) | undefined;
 
-			registerSubagentPromptRuntime({
+			await registerSubagentPromptRuntime({
 				registerTool(tool: { name: string; execute: (_id: string, params: { value: unknown }) => Promise<{ terminate?: boolean }> }) {
 					if (tool.name === "structured_output") execute = tool.execute;
 				},

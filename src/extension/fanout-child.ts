@@ -4,6 +4,7 @@ import * as path from "node:path";
 import type { ExtensionAPI, ToolDefinition } from "@earendil-works/pi-coding-agent";
 import { discoverAgents } from "../agents/agents.ts";
 import { getArtifactsDir } from "../shared/artifacts.ts";
+import { loadCodePreviewSettingsOnce, withCodePreviewShell } from "../shared/code-preview.ts";
 import { createSubagentExecutor, type SubagentParamsLike } from "../runs/foreground/subagent-executor.ts";
 import { SUBAGENT_CHILD_ENV, SUBAGENT_FANOUT_CHILD_ENV } from "../runs/shared/pi-args.ts";
 import { readNestedControlRequests, resolveNestedRouteFromEnv, writeNestedControlResult } from "../runs/shared/nested-events.ts";
@@ -125,8 +126,10 @@ function startNestedControlInboxListener(pi: ExtensionAPI, state: SubagentState)
 	return timer;
 }
 
-export default function registerFanoutChildSubagentExtension(pi: ExtensionAPI): void {
+export default async function registerFanoutChildSubagentExtension(pi: ExtensionAPI): Promise<void> {
 	if (process.env[SUBAGENT_CHILD_ENV] !== "1" || process.env[SUBAGENT_FANOUT_CHILD_ENV] !== "1") return;
+
+	await loadCodePreviewSettingsOnce();
 
 	const globalStore = globalThis as Record<string, unknown>;
 	const registeredKey = "__piSubagentFanoutChildRegisteredApis";
@@ -165,6 +168,6 @@ export default function registerFanoutChildSubagentExtension(pi: ExtensionAPI): 
 		},
 	};
 
-	pi.registerTool(tool);
+	pi.registerTool(withCodePreviewShell(tool));
 	startNestedControlInboxListener(pi, state);
 }
